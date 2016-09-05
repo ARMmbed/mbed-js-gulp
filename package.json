@@ -1,0 +1,27 @@
+{
+  "name": "mbed-js-gulp",
+  "version": "0.0.1",
+  "description": "gulp rules to build jerryscript projects for mbed",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Matthew Else <matthewelse1997@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "browserify": "^13.1.0",
+    "child-process-promise": "^2.1.3",
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-filter": "^4.0.0",
+    "gulp-print": "^2.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-run": "^1.7.1",
+    "gulp-template": "^4.0.0",
+    "gulp-uglify": "^2.0.0",
+    "promisify-node": "^0.4.0",
+    "uglify-js": "^2.7.3",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
