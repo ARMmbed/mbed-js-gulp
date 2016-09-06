@@ -76,7 +76,7 @@ module.exports = function(gulp) {
 
         return parse_pins('./build/js/pins.js')
                 .then(function(pins) {
-                    return gulp.src('tmpl/js_source.cpp.tmpl')
+                    return gulp.src(__dirname + '/tmpl/js_source.cpp.tmpl')
                                 .pipe(rename(node_package.name + '_js_source.cpp'))
                                 .pipe(template({
                                     js_files: [out_js],
@@ -87,13 +87,13 @@ module.exports = function(gulp) {
     });
 
     gulp.task('ignorefile', function() {
-        return gulp.src('tmpl/mbedignore.tmpl')
+        return gulp.src(__dirname + '/tmpl/mbedignore.tmpl')
                    .pipe(rename('.mbedignore'))
                    .pipe(gulp.dest('./build/'));
     });
 
     gulp.task('makefile', function() {
-        return gulp.src('tmpl/Makefile.tmpl')
+        return gulp.src(__dirname + '/tmpl/Makefile.tmpl')
                    .pipe(rename('Makefile'))
                    .pipe(gulp.dest('./build/'));
     });
@@ -168,7 +168,7 @@ module.exports = function(gulp) {
     gulp.task('build', ['cppify', 'ignorefile', 'makefile'], function() {
         return list_libs()
                 .then(function(libs) {
-                    var gulp_stream = gulp.src('tmpl/main.cpp.tmpl')
+                    var gulp_stream = gulp.src(__dirname + '/tmpl/main.cpp.tmpl')
                                         .pipe(rename('main.cpp'))
                                         .pipe(template({
                                             libraries: libs
