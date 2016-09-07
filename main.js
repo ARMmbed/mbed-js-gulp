@@ -98,7 +98,13 @@ module.exports = function(gulp) {
                    .pipe(gulp.dest('./build/'));
     });
 
+    // avoid deleting jerryscript et. al, since it makes subsequent builds really slow
     gulp.task('clean', function() {
+        return del(['build/out']);
+    });
+
+    // delete all the things
+    gulp.task('deepclean', function() {
         return del(['build']);
     });
 
