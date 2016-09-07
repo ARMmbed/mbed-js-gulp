@@ -134,6 +134,12 @@ module.exports = function(gulp) {
     });
 
     function list_libs() {
+        if (typeof node_package.dependencies === "undefined") {
+            return new Promise(function(resolve, reject) {
+                resolve([]);
+            });
+        }
+
         return Promise.all(Object.keys(node_package.dependencies).map(function(dep) {
             const path = 'node_modules/' + dep + '/mbedjs.json';
             return promisify(fs.stat)(path)
