@@ -15,6 +15,8 @@ module.exports = function(gulp) {
     const buffer = require('vinyl-buffer');
     const source = require('vinyl-source-stream');
 
+    const npm = require('npm');
+
     const fs = require('fs');
     const del = require('del');
     const exec = require('child-process-promise').exec;
@@ -133,30 +135,57 @@ module.exports = function(gulp) {
                 });
     });
 
-    function list_libs() {
-        if (typeof node_package.dependencies === "undefined") {
-            return new Promise(function(resolve, reject) {
-                resolve([]);
-            });
-        }
+    function dependencies(obj) {
+        console.log(obj.dependencies)
+        return obj.dependencies.map(Object.keys) + obj.dependencies.map(dependencies);
+    }
 
-        return Promise.all(Object.keys(node_package.dependencies).map(function(dep) {
-            const path = 'node_modules/' + dep + '/mbedjs.json';
-            return promisify(fs.stat)(path)
-                    .then(function() {
-                        return promisify(fs.readFile)(path);
-                    })
-                    .then(function(data) {
-                        const json_data = JSON.parse(data);
-                        return {
-                            name: dep,
-                            abs_source: json_data.source.map(function(dir) {
-                                return '../../../../node_modules/' + dep + '/' + dir
-                            }),
-                            config: json_data
-                        };
-                    });
-        }));
+    function list_libs() {
+        return new Promise(function(resolve, reject) {
+            npm.load({ production: true, depth: 0, progress: false }, function(err, npm) {
+                var native_packages = [];
+                npm.commands.ls([], true, function dependencies(err, data, lite) {
+                    function recurse_dependencies(list) {
+                        if (!list) {
+                            return;
+                        }
+
+                        let keys = Object.keys(list);
+
+                        for (let i = 0; i < keys.length; i++) {
+                            if (list[keys[i]] && !list[keys[i]].missing) {
+                                // check for mbedjs.json
+                                var path = list[keys[i]].path + '/mbedjs.json';
+
+                                try {
+                                    fs.statSync(path);
+                                } catch (e) {
+                                    recurse_dependencies(list[keys[i]].dependencies);
+                                    continue;
+                                }
+
+                                list[keys[i]].path = list[keys[i]].path.replace(new RegExp(/\\/, 'g'), "/");
+
+                                var json_data = JSON.parse(fs.readFileSync(path));
+
+                                native_packages.push({
+                                    name: list[keys[i]].name,
+                                    abs_source: json_data.source.map(function(dir) {
+                                        return list[keys[i]].path.replace("\\", "/") + '/' + dir
+                                    }),
+                                    config: json_data
+                                });
+                                recurse_dependencies(list[keys[i]].dependencies);
+                            }
+                        }
+                    }
+
+                    recurse_dependencies(data.dependencies);
+
+                    resolve(native_packages);
+                });
+            });
+        });
     }
 
     function parse_pins(path) {
@@ -180,6 +209,14 @@ module.exports = function(gulp) {
     gulp.task('build', ['cppify', 'ignorefile', 'makefile'], function() {
         return list_libs()
                 .then(function(libs) {
+                    var native_list = libs.map(function(p) { return util.colors.cyan(p.name) });
+
+                    if (native_list.length > 0) {
+                        util.log("Found native packages: " + native_list.join(", "));
+                    } else {
+                        util.log("Found no native packages.");
+                    }
+
                     var gulp_stream = gulp.src(__dirname + '/tmpl/main.cpp.tmpl')
                                         .pipe(rename('main.cpp'))
                                         .pipe(template({
@@ -187,18 +224,15 @@ module.exports = function(gulp) {
                                         }))
                                         .pipe(gulp.dest('./build/source/'));
 
-                    var end = new Promise(function(resolve, reject) {
+                    return new Promise(function(resolve, reject) {
                         gulp_stream.on('end', function() {
-                            resolve();
+                            var lib_source_files = libs.map(function(lib) { return lib.abs_source.join(' '); }).join(' ');
+
+                            resolve(run('make BOARD=' + util.env.target + ' EXTRAS="' + lib_source_files + '"', { cwd: './build', verbosity: 3 }).exec()
+                                .pipe(print())
+                                .pipe(rename('build.log'))
+                                .pipe(gulp.dest('./build')));
                         });
-                    });
-                
-                    end.then(function() {
-                        var lib_source_files = libs.map(function(lib) { return lib.abs_source.join(' '); }).join(' ');
-                        return run('make BOARD=' + util.env.target + ' EXTRAS="' + lib_source_files + '"', { cwd: './build', verbosity: 3 }).exec()
-                            .pipe(print())
-                            .pipe(rename('build.log'))
-                            .pipe(gulp.dest('./build'));
                     });
                 })
     });
