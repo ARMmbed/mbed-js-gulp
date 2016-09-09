@@ -116,23 +116,39 @@ module.exports = function(gulp) {
 
     gulp.task('pins.js', ['get-jerryscript'], function() {
         const variant = util.env_target == 'K64F' ? 'FRDM' : '';
-        var cmd = 'find ./build/jerryscript/targets/mbedos5/js/pin_defs/ -iname pins.js';
-        return promisify(exec)(cmd)
-                .then(function(result) {
-                    const files = result.stdout.split('\n').filter(function(line) {
-                        return (line.indexOf('TARGET_' + util.env.target) != -1)
-                            || (line.indexOf('TARGET_MCU_' + util.env.target) != -1
-                                && line.indexOf('TARGET_' + variant) != -1)
-                    });
 
-                    const source = files[0];
-                    return new Promise(function(resolve, reject) {
-                        gulp.src(source)
-                            .pipe(rename('pins.js'))
-                            .pipe(gulp.dest('./build/js/'))
-                            .on('end', resolve);
-                    });
-                });
+        // windows has a special version of find. in case the user has MINGW installed,
+        // we should check for the existance of find
+
+        return new Promise(function(resolve, reject) {
+            exec("find --version", function(err) {
+                if (err && err.code == 2) {
+                    // Windows
+                    var cmd = 'dir /s /b pins.js';
+                } else {
+                    // unix/cygwin
+                    console.log('find :)');
+                    var cmd = 'find ./build/jerryscript/targets/mbedos5/js/pin_defs/ -iname pins.js';
+                }
+
+                resolve(promisify(exec)(cmd)
+                    .then(function(result) {
+                        const files = result.stdout.split('\n').filter(function(line) {
+                            return (line.indexOf('TARGET_' + util.env.target) != -1)
+                                || (line.indexOf('TARGET_MCU_' + util.env.target) != -1
+                                    && line.indexOf('TARGET_' + variant) != -1)
+                        });
+
+                        const source = files[0];
+                        return new Promise(function(resolve, reject) {
+                            gulp.src(source)
+                                .pipe(rename('pins.js'))
+                                .pipe(gulp.dest('./build/js/'))
+                                .on('end', resolve);
+                        });
+                    }));
+            });
+        });
     });
 
     function dependencies(obj) {
