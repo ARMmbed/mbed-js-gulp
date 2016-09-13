@@ -1,5 +1,8 @@
 EXTRAS=
-EXTRAS_CLEAN=$(strip $(EXTRAS);../../../source)
+ifneq ($(EXTRAS),)
+EXTRAS=$(EXTRAS);
+endif
+EXTRAS_CLEAN=$(strip $(EXTRAS)../../../source)
 
 .PHONY: all
 
