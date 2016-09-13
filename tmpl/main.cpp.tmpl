@@ -17,7 +17,12 @@
 <% }); %>
 
 #include "jerryscript-mbed-event-loop/EventLoop.h"
+
 #include "Callback.h"
+#include "Serial.h"
+#include "rtos/Thread.h"
+
+#include "cmsis_os.h"
 
 using mbed::js::EventLoop;
 using mbed::Callback;
@@ -26,7 +31,7 @@ using mbed::Callback;
   <%= item.config.global_code %>
 <% }); %>
 
-int main() {
+void js_main() {
 <% _.each(libraries, function(item, key, list) { %>
   <%= item.config.init_code %>
 <% }); %>
@@ -38,6 +43,14 @@ int main() {
 <% }); %>
 
   jsmbed_js_launch();
+}
 
-  return 0;
+rtos::Thread jsThread(osPriorityNormal, DEFAULT_STACK_SIZE*2);
+
+int main() {
+  mbed::Serial pc(USBTX, USBRX);
+  pc.baud(115200);
+
+  int code = jsThread.start(js_main);
+  return code;
 }
