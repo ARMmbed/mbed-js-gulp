@@ -114,7 +114,7 @@ module.exports = function(gulp) {
     });
 
     gulp.task('get-jerryscript', ['makefile'], function() {
-        return run('make jerryscript', { cwd: './build' }).exec();
+        return run('if [ ! -d "./jerryscript/" ]; then git clone https://github.com/ARMmbed/jerryscript; fi;', { cwd: './build' }).exec();
     });
 
     gulp.task('pins.js', ['get-jerryscript'], function() {
