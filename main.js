@@ -28,8 +28,19 @@ module.exports = function(gulp) {
             entries: node_package.main,
             noParse: [
                 require.resolve('bleno'), // this is needed to stop it from trying to parse a binary file
-            ]
+            ],
+            builtins: false
         });
+
+        b.transform({
+            //global: true,
+            compress: {
+                dead_code: true,
+                global_defs: {
+                    __jerryscript: true
+                }
+            }
+        }, 'uglifyify')
 
         return b.bundle()
                 .pipe(source(node_package.name + '.bundle.js'))
