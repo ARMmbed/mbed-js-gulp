@@ -32,9 +32,7 @@ module.exports = function(gulp) {
 
         const b = browserify({
             entries: node_package.main,
-            noParse: [
-                require.resolve('bleno'), // this is needed to stop it from trying to parse a binary file
-            ],
+            noParse: noParse,
             builtins: false
         });
 
