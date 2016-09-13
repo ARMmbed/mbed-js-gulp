@@ -24,6 +24,12 @@ module.exports = function(gulp) {
     const node_package = JSON.parse(fs.readFileSync('./package.json'));
 
     gulp.task('bundle', function() {
+        var noParse = [];
+
+        try {
+            noParse.push(require.resolve('bleno'));
+        } catch (e) { /* empty */ }
+
         const b = browserify({
             entries: node_package.main,
             noParse: [
@@ -33,25 +39,20 @@ module.exports = function(gulp) {
         });
 
         b.transform({
-            //global: true,
+            global: true,
             compress: {
                 dead_code: true,
                 global_defs: {
                     __jerryscript: true
                 }
             }
-        }, 'uglifyify')
+        }, 'uglifyify');
 
         return b.bundle()
-                .pipe(source(node_package.name + '.bundle.js'))
+                .pipe(source(node_package.name + '.bundle.min.js'))
                 .pipe(buffer())
 
                 // output bundled js
-                .pipe(gulp.dest('./build/js/'))
-
-                // produce minified js
-                .pipe(uglify())
-                .pipe(rename(node_package.name + '.bundle.min.js'))
                 .pipe(gulp.dest('./build/js/'));
     });
 
