@@ -1,6 +1,6 @@
 EXTRAS=
 ifneq ($(EXTRAS),)
-EXTRAS_CLEAN=$(strip $(EXTRAS);../../../source)
+EXTRAS_CLEAN=$(strip $(EXTRAS):../../../source)
 else
 EXTRAS_CLEAN=../../../source
 endif

@@ -257,13 +257,13 @@ module.exports = function(gulp) {
                         gulp_stream.on('end', function() {
                             // include the native_extras library if it exists
                             fs.stat("./native_extras", function(err) {
-                                var lib_dirs = libs.map(function(lib) { return lib.abs_source.join(';'); });
+                                var lib_dirs = libs.map(function(lib) { return lib.abs_source.join(':'); });
 
                                 if (!err) {
                                     lib_dirs.push("../../../../native_extras/");
                                 }
 
-                                var lib_source_files = lib_dirs.join(';');
+                                var lib_source_files = lib_dirs.join(':');
 
                                 resolve(run('make BOARD=' + util.env.target + ' EXTRAS=' + lib_source_files, { cwd: './build', verbosity: 3 }).exec()
                                 .pipe(print())
