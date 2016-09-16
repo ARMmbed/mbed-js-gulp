@@ -108,7 +108,7 @@ module.exports = function(gulp) {
     });
 
     gulp.task('get-jerryscript', ['makefile'], function() {
-        return run('if [ ! -d "./jerryscript/" ]; then git clone https://github.com/ARMmbed/jerryscript; fi;', { cwd: './build' }).exec();
+        return run('if [ ! -d "./jerryscript/" ]; then git clone https://github.com/ARMmbed/jerryscript; pip install -r jerryscript/targets/mbedos5/tools/requirements.txt; fi;', { cwd: './build' }).exec();
     });
 
     gulp.task('getlibs', ['get-jerryscript'], function() {
