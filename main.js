@@ -76,7 +76,7 @@ module.exports = function(gulp) {
         return out_str;
     }
 
-    gulp.task('cppify', ['bundle'], function() {
+    gulp.task('cppify', ['getlibs', 'bundle'], function() {
         return exec("python jerryscript/targets/tools/js2c.py --ignore pins.js --no-main",
                     { cwd: './build' });
     });
@@ -87,7 +87,7 @@ module.exports = function(gulp) {
                    .pipe(gulp.dest('./build/'));
     });
 
-    gulp.task('makefile', function() {
+    gulp.task('makefile', ['make-build-dir'], function() {
         return gulp.src(__dirname + '/tmpl/Makefile.tmpl')
                    .pipe(rename('Makefile'))
                    .pipe(gulp.dest('./build/'));
@@ -103,12 +103,16 @@ module.exports = function(gulp) {
         return del(['build']);
     });
 
+    gulp.task('make-build-dir', function() {
+        return run('mkdir -p ./build/source').exec();
+    });
+
     gulp.task('get-jerryscript', ['makefile'], function() {
         return run('if [ ! -d "./jerryscript/" ]; then git clone https://github.com/ARMmbed/jerryscript; fi;', { cwd: './build' }).exec();
     });
 
     gulp.task('getlibs', ['get-jerryscript'], function() {
-        return run('make getlibs', { cwd: './build/jerryscript/targets/mbedos5' });
+        return run('make getlibs', { cwd: './build/jerryscript/targets/mbedos5' }).exec();
     });
 
     function dependencies(obj) {
@@ -182,7 +186,7 @@ module.exports = function(gulp) {
         });
     }
 
-    gulp.task('build', ['cppify', 'ignorefile', 'makefile'], function() {
+    gulp.task('build', ['getlibs', 'cppify', 'ignorefile', 'makefile'], function() {
         return list_libs()
                 .then(function(libs) {
                     var native_list = libs.map(function(p) { return util.colors.cyan(p.name) });
