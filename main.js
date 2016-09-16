@@ -77,28 +77,8 @@ module.exports = function(gulp) {
     }
 
     gulp.task('cppify', ['bundle', 'pins.js'], function() {
-        let out_js = {
-            name: cpp_name_sanitise(node_package.name),
-            path: "./build/js/" + node_package.name + ".bundle.min.js"
-        };
-
-        const source = fs.readFileSync(out_js.path, {
-            'encoding': 'utf-8'
-        });
-
-        out_js.source_length = source.length;
-        out_js.source = cpp_string_sanitise(source);
-
-        return parse_pins('./build/js/pins.js')
-                .then(function(pins) {
-                    return gulp.src(__dirname + '/tmpl/js_source.cpp.tmpl')
-                                .pipe(rename(node_package.name + '_js_source.cpp'))
-                                .pipe(template({
-                                    js_files: [out_js],
-                                    magic_strings: pins
-                                }))
-                                .pipe(gulp.dest('./build/source/'));
-                });
+        return exec("python ./build/jerryscript/targets/tools/js2c.py --ignore pins.js",
+                    { cwd: './build' });
     });
 
     gulp.task('ignorefile', function() {
@@ -128,40 +108,8 @@ module.exports = function(gulp) {
     });
 
     gulp.task('pins.js', ['get-jerryscript'], function() {
-        const variant = util.env_target == 'K64F' ? 'FRDM' : '';
-
-        // windows has a special version of find. in case the user has MINGW installed,
-        // we should check for the existance of find
-
-        return new Promise(function(resolve, reject) {
-            exec("find --version", function(err) {
-                if (err && err.code == 2) {
-                    // Windows
-                    var cmd = 'dir /s /b pins.js';
-                } else {
-                    // unix/cygwin
-                    console.log('find :)');
-                    var cmd = 'find ./build/jerryscript/targets/mbedos5/js/pin_defs/ -iname pins.js';
-                }
-
-                resolve(promisify(exec)(cmd)
-                    .then(function(result) {
-                        const files = result.stdout.split('\n').filter(function(line) {
-                            return (line.indexOf('TARGET_' + util.env.target) != -1)
-                                || (line.indexOf('TARGET_MCU_' + util.env.target) != -1
-                                    && line.indexOf('TARGET_' + variant) != -1)
-                        });
-
-                        const source = files[0];
-                        return new Promise(function(resolve, reject) {
-                            gulp.src(source)
-                                .pipe(rename('pins.js'))
-                                .pipe(gulp.dest('./build/js/'))
-                                .on('end', resolve);
-                        });
-                    }));
-            });
-        });
+        return exec("python tools/generate_pins.py -o ../../../js/pins.js -c ../../../source/pins.cpp",
+                    { cwd: './build/jerryscript/targets/mbedos5' });
     });
 
     function dependencies(obj) {
