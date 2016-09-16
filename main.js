@@ -76,8 +76,8 @@ module.exports = function(gulp) {
         return out_str;
     }
 
-    gulp.task('cppify', ['bundle', 'pins.js'], function() {
-        return exec("python ./build/jerryscript/targets/tools/js2c.py --ignore pins.js",
+    gulp.task('cppify', ['bundle'], function() {
+        return exec("python jerryscript/targets/tools/js2c.py --ignore pins.js --no-main",
                     { cwd: './build' });
     });
 
@@ -107,9 +107,8 @@ module.exports = function(gulp) {
         return run('if [ ! -d "./jerryscript/" ]; then git clone https://github.com/ARMmbed/jerryscript; fi;', { cwd: './build' }).exec();
     });
 
-    gulp.task('pins.js', ['get-jerryscript'], function() {
-        return exec("python tools/generate_pins.py -o ../../../js/pins.js -c ../../../source/pins.cpp",
-                    { cwd: './build/jerryscript/targets/mbedos5' });
+    gulp.task('getlibs', ['get-jerryscript'], function() {
+        return run('make getlibs', { cwd: './build/jerryscript/targets/mbedos5' });
     });
 
     function dependencies(obj) {
