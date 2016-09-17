@@ -11,6 +11,7 @@ module.exports = function(gulp) {
 
     const browserify = require('browserify');
     const promisify = require('promisify-node');
+    const uglifyify = require('uglifyify');
 
     const buffer = require('vinyl-buffer');
     const source = require('vinyl-source-stream');
@@ -44,7 +45,7 @@ module.exports = function(gulp) {
                     __jerryscript: true
                 }
             }
-        }, 'uglifyify');
+        }, uglifyify);
 
         return b.bundle()
                 .pipe(source(node_package.name + '.bundle.min.js'))
