@@ -27,15 +27,7 @@
 using mbed::js::EventLoop;
 using mbed::Callback;
 
-<% _.each(libraries, function(item, key, list) { %>
-  <%= item.config.global_code %>
-<% }); %>
-
 void js_main() {
-<% _.each(libraries, function(item, key, list) { %>
-  <%= item.config.init_code %>
-<% }); %>
-
   JERRY_USE_MBED_LIBRARY(base);
 
 <% _.each(libraries, function(item, key, list) { %>
