@@ -4,7 +4,7 @@ Rules for building jerryscript projects using npm, gulp and mbed. This can be
 included in your projects to speed up the process of working with Jerryscript
 and mbed.
 
-For an example of using this, see [an example project](https://github.com/matthewelse/mbed-js-example)
+For an example of using this, see [an example project](https://github.com/ARMmbed/mbed-js-example)
 
 ```bash
 cd [your project directory]
