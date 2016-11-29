@@ -1,5 +1,7 @@
 /* Copyright (c) 2016 ARM Limited. All rights reserved. */
 
+#include "mbed.h"
+
 // Provides jsmbed_js_launch()
 #include "jerryscript-mbed-launcher/launcher.h"
 
@@ -9,6 +11,10 @@
 // Provides the base wrapper registration symbol that JSMBED_USE_WRAPPER uses.
 // This means all of the base handlers will be registered.
 #include "jerryscript-mbed-drivers/lib_drivers.h"
+
+#ifdef JSMBED_USE_RAW_SERIAL
+mbed::RawSerial pc(USBTX, USBRX);
+#endif
 
 <% _.each(libraries, function(item, key, list) { %>
 <% _.each(item.config.includes, function(item, key, list) { %>
@@ -40,7 +46,9 @@ void js_main() {
 rtos::Thread jsThread(osPriorityNormal, DEFAULT_STACK_SIZE*2);
 
 int main() {
+#ifndef JSMBED_USE_RAW_SERIAL
   mbed::Serial pc(USBTX, USBRX);
+#endif
   pc.baud(115200);
 
   int code = jsThread.start(js_main);
