@@ -1,6 +1,8 @@
 'use strict';
 
 module.exports = function(gulp) {
+    const JERRYSCRIPT_REVISION = '4d2c22a11818cf1e7d4e99a272e2b0699c93ba45';
+    
     const run = require('gulp-run');
     const util = require('gulp-util');
     const print = require('gulp-print');
@@ -109,7 +111,14 @@ module.exports = function(gulp) {
     });
 
     gulp.task('get-jerryscript', ['makefile'], function() {
-        return run('if [ ! -d "./jerryscript/" ]; then git clone https://github.com/samsung/jerryscript; pip install -r jerryscript/targets/mbedos5/tools/requirements.txt; fi;', { cwd: './build' }).exec();
+        return run('\
+                   if [ ! -d "./jerryscript/" ]; then \
+                       git clone https://github.com/jerryscript-project/jerryscript; \
+                       cd jerryscript; \
+                       git checkout ' + JERRYSCRIPT_REVISION + '; \
+                       cd ..; \
+                       pip install -r jerryscript/targets/mbedos5/tools/requirements.txt; \
+                   fi;', { cwd: './build' }).exec();
     });
 
     gulp.task('getlibs', ['get-jerryscript'], function() {
