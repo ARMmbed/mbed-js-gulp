@@ -8,4 +8,4 @@ endif
 .PHONY: all
 
 all:
-	cd jerryscript/targets/mbedos5 && pip install -r tools/requirements.txt && rm -f source/js_encoded.cpp && rm -f source/main.cpp && make BOARD=$(BOARD) EXTRA_SRC="$(EXTRAS_CLEAN)" EXTERN_BUILD_DIR=../../../out/$(BOARD) NO_JS=1
+	cd jerryscript/targets/mbedos5 && pip install -r tools/requirements.txt && rm -f source/js_encoded.cpp && rm -f source/pins.cpp && rm -f source/main.cpp && make BOARD=$(BOARD) EXTRA_SRC="$(EXTRAS_CLEAN)" EXTERN_BUILD_DIR=../../../out/$(BOARD) NO_JS=1
