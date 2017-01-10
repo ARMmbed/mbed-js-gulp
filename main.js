@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = function(gulp) {
-    const JERRYSCRIPT_REVISION = '65c32f6a3bad963d14ac7a1992451a4bf494ab06';
+    const JERRYSCRIPT_REVISION = '8ebbfda996cf1dc27b64f84ec9122c19c6fb90f1';
     
     const run = require('gulp-run');
     const util = require('gulp-util');
