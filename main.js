@@ -2,7 +2,7 @@
 
 module.exports = function(gulp) {
     const JERRYSCRIPT_REVISION = '8ebbfda996cf1dc27b64f84ec9122c19c6fb90f1';
-    
+
     const run = require('gulp-run');
     const util = require('gulp-util');
     const print = require('gulp-print');
@@ -23,6 +23,8 @@ module.exports = function(gulp) {
     const fs = require('fs');
     const del = require('del');
     const exec = require('child-process-promise').exec;
+
+    const isWindows = require('os').platform() === 'win32';
 
     const node_package = JSON.parse(fs.readFileSync('./package.json'));
 
@@ -107,18 +109,35 @@ module.exports = function(gulp) {
     });
 
     gulp.task('make-build-dir', function() {
-        return run('mkdir -p ./build/source').exec();
+        if (!fs.existsSync('./build')) {
+            fs.mkdirSync('./build');
+        }
+
+        if (!fs.existsSync('./build/source')) {
+            fs.mkdirSync('./build/source');
+        }
     });
 
     gulp.task('get-jerryscript', ['makefile'], function() {
-        return run('\
-                   if [ ! -d "./jerryscript/" ]; then \
-                       git clone https://github.com/jerryscript-project/jerryscript; \
-                       cd jerryscript; \
-                       git checkout ' + JERRYSCRIPT_REVISION + '; \
-                       cd ..; \
-                       pip install -r jerryscript/targets/mbedos5/tools/requirements.txt; \
-                   fi;', { cwd: './build' }).exec();
+        if (!fs.existsSync('./build/jerryscript')) {
+            let commands = [
+                'git clone https://github.com/jerryscript-project/jerryscript',
+                'cd jerryscript',
+                'git checkout ' + JERRYSCRIPT_REVISION,
+                'cd ..',
+                'pip install -r jerryscript/targets/mbedos5/tools/requirements.txt',
+            ];
+
+            let cmd;
+            if (isWindows) {
+                cmd = commands.join(' & ');
+            }
+            else {
+                cmd = commands.join('; ');
+            }
+
+            return run(cmd, { cwd: './build' }).exec();
+        }
     });
 
     gulp.task('getlibs', ['get-jerryscript'], function() {
