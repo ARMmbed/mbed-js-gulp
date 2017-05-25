@@ -82,7 +82,7 @@ module.exports = function(gulp) {
     }
 
     gulp.task('cppify', ['getlibs', 'bundle'], function() {
-        return exec("python jerryscript/targets/tools/js2c.py --ignore pins.js --no-main",
+        return exec("python jerryscript/tools/js2c.py --ignore pins.js --no-main",
                     { cwd: './build' });
     });
 
