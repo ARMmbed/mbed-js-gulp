@@ -43,7 +43,7 @@ void js_main() {
   jsmbed_js_launch();
 }
 
-rtos::Thread jsThread(osPriorityNormal, DEFAULT_STACK_SIZE*2);
+rtos::Thread jsThread(osPriorityNormal, 8192);
 
 int main() {
 #ifndef JSMBED_USE_RAW_SERIAL
