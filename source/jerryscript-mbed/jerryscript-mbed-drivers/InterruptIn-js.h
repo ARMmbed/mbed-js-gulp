@@ -1,0 +1,8 @@
+#ifndef _JERRYSCRIPT_MBED_DRIVERS_INTERRUPTIN_H
+#define _JERRYSCRIPT_MBED_DRIVERS_INTERRUPTIN_H
+
+#include "jerryscript-mbed-library-registry/wrap_tools.h"
+
+DECLARE_CLASS_CONSTRUCTOR(InterruptIn);
+
+#endif  // _JERRYSCRIPT_MBED_DRIVERS_INTERRUPTIN_H

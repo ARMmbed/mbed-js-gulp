@@ -1,7 +1,6 @@
 'use strict';
 
 module.exports = function(gulp) {
-    const JERRYSCRIPT_REVISION = '5cdb98c75ec231806677a8af0b16d508b1033eb2';
 
     const run = require('gulp-run');
     const util = require('gulp-util');
@@ -28,7 +27,7 @@ module.exports = function(gulp) {
 
     const node_package = JSON.parse(fs.readFileSync('./package.json'));
 
-    gulp.task('bundle', function() {
+    gulp.task('bundle', ['make-build-dir'], function() {
         var noParse = [];
 
         try {
@@ -81,21 +80,49 @@ module.exports = function(gulp) {
         return out_str;
     }
 
-    gulp.task('cppify', ['getlibs', 'bundle'], function() {
+    gulp.task('cppify', ['get-jerryscript', 'bundle'], function() {
         return exec("python jerryscript/tools/js2c.py --ignore pins.js --no-main",
                     { cwd: './build' });
     });
 
-    gulp.task('ignorefile', function() {
-        return gulp.src(__dirname + '/tmpl/mbedignore.tmpl')
-                   .pipe(rename('.mbedignore'))
-                   .pipe(gulp.dest('./build/'));
+    gulp.task('pins', ['tools', 'get-mbed-os', 'bundle'], function() {
+        return exec("python tools/generate_pins.py " + util.env.target,
+                    { cwd: './build' });
     });
 
-    gulp.task('makefile', ['make-build-dir'], function() {
-        return gulp.src(__dirname + '/tmpl/Makefile.tmpl')
-                   .pipe(rename('Makefile'))
-                   .pipe(gulp.dest('./build/'));
+    gulp.task('requirements', ['tools'], function() {
+        return exec("pip install -r requirements.txt",
+                    { cwd: './build/tools' });
+    });
+
+    gulp.task('source', ['make-build-dir'], function() {
+        if (!fs.existsSync('./build/source')) {
+          return gulp.src(__dirname + '/source/**/*')
+                     .pipe(gulp.dest('./build/source/'));
+        }
+    });
+
+    gulp.task('tools', ['make-build-dir'], function() {
+        if (!fs.existsSync('./build/tools')) {
+          return gulp.src(__dirname + '/tools/*')
+                     .pipe(gulp.dest('./build/tools/'));
+        }
+    });
+
+    gulp.task('mbed_app', ['make-build-dir'], function() {
+        if (!fs.existsSync('./build/mbed_app.json')) {
+          return gulp.src(__dirname + '/tmpl/mbed_app.json.tmpl')
+                     .pipe(rename('mbed_app.json'))
+                     .pipe(gulp.dest('./build/'));
+        }
+    });
+
+    gulp.task('ignorefile', ['make-build-dir'], function() {
+        if (!fs.existsSync('./build/.mbedignore')) {
+          return gulp.src(__dirname + '/tmpl/mbedignore.tmpl')
+                     .pipe(rename('.mbedignore'))
+                     .pipe(gulp.dest('./build/'));
+        }
     });
 
     // avoid deleting jerryscript et. al, since it makes subsequent builds really slow
@@ -112,20 +139,26 @@ module.exports = function(gulp) {
         if (!fs.existsSync('./build')) {
             fs.mkdirSync('./build');
         }
+    });
 
-        if (!fs.existsSync('./build/source')) {
-            fs.mkdirSync('./build/source');
+    gulp.task('get-jerryscript', ['make-build-dir'], function() {
+        if (!fs.existsSync('./build/jerryscript')) {
+            return run("git clone https://github.com/jerryscript-project/jerryscript", { cwd: './build' }).exec();
         }
     });
 
-    gulp.task('get-jerryscript', ['makefile'], function() {
-        if (!fs.existsSync('./build/jerryscript')) {
+    gulp.task('get-mbed-os', ['make-build-dir'], function() {
+        if (!fs.existsSync('./build/mbed-os')) {
+            return run('git clone https://github.com/ARMmbed/mbed-os', { cwd: './build' }).exec();
+        }
+    });
+
+    gulp.task('config', ['make-build-dir'], function() {
+        if (!fs.existsSync('./build/.mbed')) {
             let commands = [
-                'git clone https://github.com/jerryscript-project/jerryscript',
-                'cd jerryscript',
-                'git checkout ' + JERRYSCRIPT_REVISION,
-                'cd ..',
-                'pip install -r jerryscript/targets/mbedos5/tools/requirements.txt',
+              'echo "ROOT=." > .mbed',
+              'mbed config root .',
+              'mbed toolchain GCC_ARM',
             ];
 
             let cmd;
@@ -138,10 +171,6 @@ module.exports = function(gulp) {
 
             return run(cmd, { cwd: './build' }).exec();
         }
-    });
-
-    gulp.task('getlibs', ['get-jerryscript'], function() {
-        return run('make getlibs', { cwd: './build/jerryscript/targets/mbedos5' }).exec();
     });
 
     function dependencies(obj) {
@@ -215,7 +244,7 @@ module.exports = function(gulp) {
         });
     }
 
-    gulp.task('build', ['getlibs', 'cppify', 'ignorefile', 'makefile'], function() {
+    gulp.task('build', ['config', 'cppify', 'ignorefile', 'source', 'pins', 'mbed_app', 'requirements'], function() {
         return list_libs()
                 .then(function(libs) {
                     var native_list = libs.map(function(p) { return util.colors.cyan(p.name) });
@@ -245,7 +274,25 @@ module.exports = function(gulp) {
 
                                 var lib_source_files = lib_dirs.join(':');
 
-                                resolve(run('make BOARD=' + util.env.target + ' EXTRAS=' + lib_source_files, { cwd: './build', verbosity: 3 }).exec()
+                                let commands = [
+                                  'mbed target ' + util.env.target,
+                                  'mbed compile -j0 --source . --build ./out/' + util.env.target
+                                  + ' -D "CONFIG_MEM_HEAP_AREA_SIZE=(1024*16)"',
+                                ];
+
+                                if (lib_source_files) {
+                                  commands[1] += ' --source ' + lib_source_files;
+                                }
+
+                                let cmd;
+                                if (isWindows) {
+                                    cmd = commands.join(' & ');
+                                }
+                                else {
+                                    cmd = commands.join('; ');
+                                }
+
+                                resolve(run(cmd, { cwd: './build', verbosity: 3 }).exec()
                                 .pipe(print())
                                 .pipe(rename('build.log'))
                                 .pipe(gulp.dest('./build')));

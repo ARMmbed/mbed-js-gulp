@@ -1,0 +1,8 @@
+#ifndef _JERRYSCRIPT_MBED_DRIVERS_DIGITALOUT_H
+#define _JERRYSCRIPT_MBED_DRIVERS_DIGITALOUT_H
+
+#include "jerryscript-mbed-library-registry/wrap_tools.h"
+
+DECLARE_CLASS_CONSTRUCTOR(DigitalOut);
+
+#endif  // _JERRYSCRIPT_MBED_DRIVERS_DIGITALOUT_H
